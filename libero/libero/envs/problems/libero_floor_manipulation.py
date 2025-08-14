@@ -7,6 +7,42 @@ from libero.libero.envs.predicates import *
 from libero.libero.envs.regions import *
 from libero.libero.envs.utils import rectangle2xyrange
 
+from scipy.spatial.transform import Rotation
+
+def rotate_around_z(original_quat=None, original_pos=None, degrees=0):
+    """
+    计算四元数和/或3D位置点绕Z轴旋转指定角度后的新值
+    
+    参数:
+        original_quat: 原始四元数 [w, x, y, z] (可选)
+        original_pos: 原始位置 [x, y, z] (可选)
+        degrees: 旋转角度（度数），正值为逆时针方向
+        
+    返回:
+        字典包含:
+        - 'new_quat': 旋转后的四元数 [w, x, y, z] (如果输入了original_quat)
+        - 'new_pos': 旋转后的位置 [x, y, z] (如果输入了original_pos)
+    """
+    result = {}
+    
+    # 创建Z轴旋转
+    z_rotation = Rotation.from_euler('z', degrees, degrees=True)
+    
+    # 处理四元数旋转
+    if original_quat is not None:
+        original_rot = Rotation.from_quat([original_quat[1], original_quat[2], original_quat[3], original_quat[0]])
+        combined_rot = z_rotation * original_rot
+        new_quat = combined_rot.as_quat()
+        # result['new_quat'] = [new_quat[3], new_quat[0], new_quat[1], new_quat[2]]
+        result['new_quat'] = [float(new_quat[3]), float(new_quat[0]), float(new_quat[1]), float(new_quat[2])]
+    
+    # 处理位置点旋转
+    if original_pos is not None:
+        # 将位置转换为齐次坐标并应用旋转
+        rotated_pos = z_rotation.apply(original_pos)
+        result['new_pos'] = rotated_pos.tolist() if isinstance(rotated_pos, np.ndarray) else rotated_pos
+    
+    return result
 
 @register_problem
 class Libero_Floor_Manipulation(BDDLBaseDomain):

@@ -31,6 +31,13 @@ class ControlEnv:
         camera_names=[
             "agentview",
             "robot0_eye_in_hand",
+            "agentview_30",
+            "agentview_60",
+            "agentview_120",
+            "agentview_180",
+            "agentview_240",
+            "agentview_300",
+            "agentview_330"
         ],
         camera_heights=128,
         camera_widths=128,
