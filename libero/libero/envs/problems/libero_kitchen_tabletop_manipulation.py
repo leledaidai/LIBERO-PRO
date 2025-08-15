@@ -9,6 +9,40 @@ from libero.libero.envs.utils import rectangle2xyrange
 
 from scipy.spatial.transform import Rotation
 
+def rotate_around_y(original_quat=None, original_pos=None, degrees=0):
+    """
+    计算四元数和/或3D位置点绕Y轴旋转指定角度后的新值
+    
+    参数:
+        original_quat: 原始四元数 [w, x, y, z] (可选)
+        original_pos: 原始位置 [x, y, z] (可选)
+        degrees: 旋转角度（度数），正值为从X轴向Z轴旋转方向
+        
+    返回:
+        字典包含:
+        - 'new_quat': 旋转后的四元数 [w, x, y, z] (如果输入了original_quat)
+        - 'new_pos': 旋转后的位置 [x, y, z] (如果输入了original_pos)
+    """
+    result = {}
+    
+    # 创建Y轴旋转（唯一修改处：将'z'改为'y'）
+    y_rotation = Rotation.from_euler('y', -degrees, degrees=True)
+    
+    # 处理四元数旋转（逻辑与Z轴版本完全相同）
+    if original_quat is not None:
+        original_rot = Rotation.from_quat([original_quat[1], original_quat[2], original_quat[3], original_quat[0]])
+        combined_rot = y_rotation * original_rot  # 旋转组合顺序保持不变
+        new_quat = combined_rot.as_quat()
+        result['new_quat'] = [float(new_quat[3]), float(new_quat[0]), float(new_quat[1]), float(new_quat[2])]
+    
+    # 处理位置点旋转（逻辑与Z轴版本完全相同）
+    if original_pos is not None:
+        rotated_pos = y_rotation.apply(original_pos)
+        result['new_pos'] = rotated_pos.tolist() if isinstance(rotated_pos, np.ndarray) else rotated_pos
+    
+    return result
+
+
 def rotate_around_z(original_quat=None, original_pos=None, degrees=0):
     """
     计算四元数和/或3D位置点绕Z轴旋转指定角度后的新值
@@ -242,6 +276,22 @@ class Libero_Kitchen_Tabletop_Manipulation(BDDLBaseDomain):
             mujoco_arena.set_camera(
                 camera_name=f"agentview_{str(view)}", pos=pos_view, quat=quat_view
             )
+
+        up_list = [30, 60]
+        for up_view in up_list:
+            result_up = rotate_around_y(original_quat=quat_av, original_pos=pos_av, degrees=int(up_view))
+            pos_up = [round(x,4) for x in result_up['new_pos']]
+            quat_up = [round(x,4) for x in result_up['new_quat']]
+            mujoco_arena.set_camera(
+                camera_name=f"agentview_up_{str(up_view)}", pos=pos_up, quat=quat_up
+            )
+            for view in view_list:
+                result_view = rotate_around_z(original_quat=quat_up, original_pos=pos_up, degrees=int(view))
+                pos_view = [round(x,4) for x in result_view['new_pos']]
+                quat_view = [round(x,4) for x in result_view['new_quat']]
+                mujoco_arena.set_camera(
+                    camera_name=f"agentview_up_{str(up_view)}_{str(view)}", pos=pos_view, quat=quat_view
+                )
 
         # For visualization purpose
         mujoco_arena.set_camera(
