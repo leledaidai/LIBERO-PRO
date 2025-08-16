@@ -258,7 +258,7 @@ class Libero_Coffee_Table_Manipulation(BDDLBaseDomain):
         mujoco_arena.set_camera(
             camera_name="agentview", pos=pos_av, quat=quat_av
         )
-        view_list = [30,60,120,180,240,300,330]
+        view_list = [30,60,90,120,180,240,270,300,330]
         for view in view_list:
             result_view = rotate_around_z(original_quat=quat_av, original_pos=pos_av, degrees=int(view))
             pos_view = [round(x,4) for x in result_view['new_pos']]

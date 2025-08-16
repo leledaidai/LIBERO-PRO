@@ -61,6 +61,9 @@
     <camera mode="fixed" name="agentview_120" pos="-0.75 1.299 0.9" quat="-0.2053 -0.1576 0.5883 0.7661"/>
     <camera mode="fixed" name="agentview_240" pos="-0.75 -1.299 0.9" quat="0.7661 0.5883 -0.1576 -0.2053"/>
     <camera mode="fixed" name="agentview_180" pos="-1.5 0.0 0.9" quat="-0.5608 -0.4306 0.4306 0.5608"/>
+    <camera mode="fixed" name="agentview_90" pos="-0.75 -1.299 0.9" quat="0.7661 0.5883 -0.1576 -0.2053"/>
+    <camera mode="fixed" name="agentview_270" pos="-1.5 0.0 0.9" quat="-0.5608 -0.4306 0.4306 0.5608"/>
+    
     <camera mode="fixed" name="agentview_up_30_30" pos="1.299 0.75 0.9" quat="0.3966 0.3045 0.5274 0.6869"/>
     <camera mode="fixed" name="agentview_up_30_60" pos="0.75 1.299 0.9" quat="0.2053 0.1576 0.5883 0.7661"/>
     <camera mode="fixed" name="agentview_up_30_330" pos="1.299 -0.75 0.9" quat="0.6869 0.5274 0.3045 0.3966"/>
