@@ -283,7 +283,7 @@ class Libero_Kitchen_Tabletop_Manipulation(BDDLBaseDomain):
                 camera_name=f"agentview_{str(view)}", pos=pos_view, quat=quat_view
             )
 
-        up_list = [15, 345]
+        up_list = [15, 30, 345]
         for up_view in up_list:
             result_up = rotate_around_y(original_quat=quat_av, original_pos=pos_av, degrees=int(up_view))
             pos_up = [round(x,4) for x in result_up['new_pos']]

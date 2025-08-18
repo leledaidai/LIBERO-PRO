@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation
 
 def rotate_around_y(original_quat=None, original_pos=None, degrees=0):
     """
-    计算四元数和/或3D位置点绕Y轴旋转指定角度后的新值
+    计算四元数和/或3D位置点绕自定义轴 (x=0, z=0.8) 的平行于Y轴的轴旋转指定角度后的新值
     
     参数:
         original_quat: 原始四元数 [w, x, y, z] (可选)
@@ -25,20 +25,27 @@ def rotate_around_y(original_quat=None, original_pos=None, degrees=0):
     """
     result = {}
     
-    # 创建Y轴旋转（唯一修改处：将'z'改为'y'）
-    y_rotation = Rotation.from_euler('y', -degrees, degrees=True)
+    # 定义旋转轴 (x=0, z=0.8) 的平行于Y轴的向量
+    axis = np.array([0, 1, 0])  # 方向与Y轴相同
+    axis_point = np.array([0, 0, 0.8])  # 轴经过的点
     
-    # 处理四元数旋转（逻辑与Z轴版本完全相同）
+    # 创建绕自定义轴的旋转
+    custom_rotation = Rotation.from_rotvec(np.radians(-degrees) * axis)
+    
+    # 处理四元数旋转
     if original_quat is not None:
         original_rot = Rotation.from_quat([original_quat[1], original_quat[2], original_quat[3], original_quat[0]])
-        combined_rot = y_rotation * original_rot  # 旋转组合顺序保持不变
+        combined_rot = custom_rotation * original_rot
         new_quat = combined_rot.as_quat()
         result['new_quat'] = [float(new_quat[3]), float(new_quat[0]), float(new_quat[1]), float(new_quat[2])]
     
-    # 处理位置点旋转（逻辑与Z轴版本完全相同）
+    # 处理位置点旋转
     if original_pos is not None:
-        rotated_pos = y_rotation.apply(original_pos)
-        result['new_pos'] = rotated_pos.tolist() if isinstance(rotated_pos, np.ndarray) else rotated_pos
+        # 对于点旋转，需要先平移到旋转轴，旋转后再平移回来
+        translated_pos = np.array(original_pos) - axis_point
+        rotated_pos = custom_rotation.apply(translated_pos)
+        final_pos = rotated_pos + axis_point
+        result['new_pos'] = final_pos.tolist() if isinstance(final_pos, np.ndarray) else final_pos
     
     return result
 
@@ -272,7 +279,7 @@ class Libero_Floor_Manipulation(BDDLBaseDomain):
                 camera_name=f"agentview_{str(view)}", pos=pos_view, quat=quat_view
             )
 
-        up_list = [30, 60]
+        up_list = [15, 30, 345]
         for up_view in up_list:
             result_up = rotate_around_y(original_quat=quat_av, original_pos=pos_av, degrees=int(up_view))
             pos_up = [round(x,4) for x in result_up['new_pos']]
