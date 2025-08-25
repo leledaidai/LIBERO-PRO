@@ -9,6 +9,42 @@ from libero.libero.envs.utils import rectangle2xyrange
 
 from scipy.spatial.transform import Rotation
 
+def scale_distance_from_pivot(original_quat=None, original_pos=None, scale_factor=1.3):
+    """
+    计算位置点到 (0, 0, 0.8) 的距离并按比例缩放，保持四元数不变
+    
+    参数:
+        original_quat: 原始四元数 [w, x, y, z] (可选)
+        original_pos: 原始位置 [x, y, z] (可选)
+        scale_factor: 距离缩放因子 (默认1.5)
+        
+    返回:
+        字典包含:
+        - 'new_quat': 原始四元数 [w, x, y, z] (如果输入了original_quat)
+        - 'new_pos': 缩放后的位置 [x, y, z] (如果输入了original_pos)
+    """
+    result = {}
+    
+    # 定义轴点
+    pivot_point = np.array([0, 0, 0.8])
+    
+    # 处理四元数（保持不变）
+    if original_quat is not None:
+        result['new_quat'] = original_quat
+    
+    # 处理位置点缩放
+    if original_pos is not None:
+        original_pos = np.array(original_pos)
+        # 计算从轴点到原始位置的向量
+        vec_to_point = original_pos - pivot_point
+        # 缩放这个向量
+        scaled_vec = vec_to_point * scale_factor
+        # 计算新位置
+        new_pos = pivot_point + scaled_vec
+        result['new_pos'] = new_pos.tolist() if isinstance(new_pos, np.ndarray) else new_pos
+    
+    return result
+
 def rotate_around_y(original_quat=None, original_pos=None, degrees=0):
     """
     计算四元数和/或3D位置点绕自定义轴 (x=0, z=0.8) 的平行于Y轴的轴旋转指定角度后的新值
@@ -274,9 +310,29 @@ class Libero_Coffee_Table_Manipulation(BDDLBaseDomain):
                 camera_name=f"agentview_{str(view)}", pos=pos_view, quat=quat_view
             )
 
-        up_list = [15, 30, 345]
+        up_list = [15, 345]
         for up_view in up_list:
             result_up = rotate_around_y(original_quat=quat_av, original_pos=pos_av, degrees=int(up_view))
+            pos_up = [round(x,4) for x in result_up['new_pos']]
+            quat_up = [round(x,4) for x in result_up['new_quat']]
+            mujoco_arena.set_camera(
+                camera_name=f"agentview_up_{str(up_view)}", pos=pos_up, quat=quat_up
+            )
+            for view in view_list:
+                result_view = rotate_around_z(original_quat=quat_up, original_pos=pos_up, degrees=int(view))
+                pos_view = [round(x,4) for x in result_view['new_pos']]
+                quat_view = [round(x,4) for x in result_view['new_quat']]
+                mujoco_arena.set_camera(
+                    camera_name=f"agentview_up_{str(up_view)}_{str(view)}", pos=pos_view, quat=quat_view
+                )
+
+        up_scale_list = [30]
+        scale_factor = 1.25
+        for up_view in up_scale_list:
+            result = scale_distance_from_pivot(original_quat=quat_av, original_pos=pos_av, scale_factor=scale_factor)
+            pos_scale_av = [round(x,4) for x in result['new_pos']]
+            quat_scale_av = [round(x,4) for x in result['new_quat']]
+            result_up = rotate_around_y(original_quat=quat_scale_av, original_pos=pos_scale_av, degrees=int(up_view))
             pos_up = [round(x,4) for x in result_up['new_pos']]
             quat_up = [round(x,4) for x in result_up['new_quat']]
             mujoco_arena.set_camera(
